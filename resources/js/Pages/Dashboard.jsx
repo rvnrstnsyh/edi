@@ -5,10 +5,10 @@ import { Head } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 
 export default function Dashboard() {
-    const [items, setItems] = useState("");
+    const [items, setItems] = useState([]);
 
     useEffect(() => {
-        axios.get("/api/items", {
+        axios.get("/api/item", {
             headers: {
                 "Authorization": "Bearer" +
                     localStorage.getItem("access_token"),

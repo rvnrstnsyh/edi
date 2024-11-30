@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Dashboard\ItemsController;
+use App\Http\Controllers\ItemController;
 use App\Http\Controllers\Auth\AuthenticatedTokenController;
 
 Route::post('login', [AuthenticatedTokenController::class, 'store'])->name('login.api');
@@ -13,5 +13,11 @@ Route::middleware(['auth:api'])->group(function () {
 });
 
 Route::middleware(['auth:api'])->group(function () {
-    Route::get('items', [ItemsController::class, 'index'])->name('items.index');
+    Route::prefix('item')->group(function () {
+        Route::get('/', [ItemController::class, 'index'])->name('item.index');
+        Route::post('/', [ItemController::class, 'store'])->name('item.store');
+        Route::get('/{id}', [ItemController::class, 'show'])->name('item.show');
+        Route::put('/{id}', [ItemController::class, 'update'])->name('item.update');
+        Route::delete('/{id}', [ItemController::class, 'destroy'])->name('item.destroy');
+    });
 });
