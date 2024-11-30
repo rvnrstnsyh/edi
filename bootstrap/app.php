@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(TrimStrings::class);
         $middleware->redirectGuestsTo(fn() => route('login'));
         $middleware->redirectUsersTo(fn() => route('dashboard'));
+        $middleware->validateCsrfTokens(except: ['api/*']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (AuthenticationException $error, Request $request) {
