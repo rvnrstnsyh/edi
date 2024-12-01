@@ -26,9 +26,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::prefix('pos')->group(function () {
         Route::get('transactions', [TransactionController::class, 'index'])->name('transaction.index');
         Route::post('transactions', [TransactionController::class, 'store'])->name('transaction.store');
+    });
 
-        // Report Routes
-        Route::get('reports', [TransactionReportController::class, 'transactionReport'])->name('transaction.report');
-        Route::get('stocks', [TransactionReportController::class, 'stockReport'])->name('stock.report');
+    // Report Routes
+    Route::prefix('reports')->group(function () {
+        Route::get('stock', [TransactionReportController::class, 'stockReport'])->name('stock.report');
+        Route::get('transaction', [TransactionReportController::class, 'transactionReport'])->name('transaction.report');
     });
 });
