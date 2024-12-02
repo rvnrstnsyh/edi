@@ -63,7 +63,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/items",
+     *     path="/api/items",
      *     operationId="createItem",
      *     tags={"Items"},
      *     summary="Create a new item",
@@ -129,7 +129,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/items/{id}",
+     *     path="/api/items/{id}",
      *     operationId="getItem",
      *     tags={"Items"},
      *     summary="Get item by ID",
@@ -196,7 +196,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/items/{id}",
+     *     path="/api/items/{id}",
      *     operationId="updateItem",
      *     tags={"Items"},
      *     summary="Update item by ID",
@@ -287,7 +287,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/items/{id}",
+     *     path="/api/items/{id}",
      *     operationId="deleteItem",
      *     tags={"Items"},
      *     summary="Delete item by ID",

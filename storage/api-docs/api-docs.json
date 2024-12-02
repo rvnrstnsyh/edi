@@ -397,9 +397,7 @@
                         "bearerAuth": []
                     }
                 ]
-            }
-        },
-        "/items": {
+            },
             "post": {
                 "tags": [
                     "Items"
@@ -517,7 +515,7 @@
                 ]
             }
         },
-        "/items/{id}": {
+        "/api/items/{id}": {
             "get": {
                 "tags": [
                     "Items"
