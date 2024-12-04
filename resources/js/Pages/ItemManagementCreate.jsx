@@ -1,8 +1,8 @@
 import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-import { useEffect, useState } from "react";
-import { Head, Link, usePage } from "@inertiajs/react";
+import { useState } from "react";
+import { Head, Link } from "@inertiajs/react";
 
 export default function ItemManagementManage() {
   const [formData, setFormData] = useState({
