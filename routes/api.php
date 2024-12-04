@@ -5,6 +5,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionReportController;
 use App\Http\Controllers\Auth\AuthenticatedTokenController;
+use App\Http\Controllers\ImageUploadController;
 
 Route::post('login', [AuthenticatedTokenController::class, 'store'])->name('login.api');
 
@@ -12,6 +13,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('me', [AuthenticatedTokenController::class, 'show'])->name('me.api');
     Route::post('refresh', [AuthenticatedTokenController::class, 'update'])->name('refresh.api');
     Route::post('logout', [AuthenticatedTokenController::class, 'destroy'])->name('logout.api');
+
+    Route::post('/upload-image', [ImageUploadController::class, 'store'])->name('image.store');
 
     // Item Routes
     Route::prefix('items')->group(function () {

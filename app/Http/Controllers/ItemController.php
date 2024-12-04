@@ -7,6 +7,7 @@ use App\Models\Item;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\ItemStoreRequest;
+use App\Http\Requests\ItemUpdateRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -253,21 +254,18 @@ class ItemController extends Controller
      *     )
      * )
      */
-    public function update(ItemStoreRequest $request, string $id): JsonResponse
+    public function update(ItemUpdateRequest $request, string $id): JsonResponse
     {
         try {
             $item = Item::findOrFail($id);
             $validatedData = $request->validated();
-            $oldImagePath = null;
-            if ($item->image_url) $oldImagePath = str_replace('/storage/', '', $item->image_url);
-
-            if ($request->hasFile('image')) {
-                if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) Storage::disk('public')->delete($oldImagePath);
-                $imagePath = $request->file('image')->store('items', 'public');
-                $validatedData['image_url'] = Storage::url($imagePath);
+            if (isset($validatedData['image_url']) && $validatedData['image_url'] !== $item->image_url) {
+                $oldImagePath = $item->image_url ? str_replace('/storage/', '', $item->image_url) : null;
+                if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+                    Storage::disk('public')->delete($oldImagePath);
+                }
             }
             $item->update($validatedData);
-
             return response()->json($item);
         } catch (ModelNotFoundException $error) {
             Log::warning('Item not found for update: ' . $id);
@@ -276,7 +274,6 @@ class ItemController extends Controller
                 'error' => $error->getMessage()
             ], 404);
         } catch (Exception $error) {
-            if (isset($imagePath) && Storage::disk('public')->exists($imagePath)) Storage::disk('public')->delete($imagePath);
             Log::error('Error updating item: ' . $error->getMessage());
             return response()->json([
                 'message' => 'Failed to update item',

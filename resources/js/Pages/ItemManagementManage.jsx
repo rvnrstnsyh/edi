@@ -1,21 +1,24 @@
 import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
-import { useForm } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
 
 export default function ItemManagementManage() {
   const [item, setItem] = useState(null);
-  const itemId = usePage().url.match(/\/item-management\/(\d+)\/manage/)[1];
-  const { data, setData, put, processing, errors } = useForm({
+  const [formData, setFormData] = useState({
     name: "",
     price: "",
+    category: "Other",
     initial_stock: "",
     current_stock: "",
-    category: "Other",
     image_url: null,
   });
+  const [errors, setErrors] = useState({});
+  const [processing, setProcessing] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+
+  const itemId = usePage().url.match(/\/item-management\/(\d+)\/manage/)[1];
 
   useEffect(() => {
     axios.get(`/api/items/${itemId}`, {
@@ -25,30 +28,80 @@ export default function ItemManagementManage() {
     }).then((response) => {
       const fetchedItem = response.data;
       setItem(fetchedItem);
-      setData({
+      setFormData({
         name: fetchedItem.name,
         price: fetchedItem.price.toString(),
+        category: fetchedItem.category,
         initial_stock: fetchedItem.initial_stock.toString(),
         current_stock: fetchedItem.current_stock.toString(),
-        category: fetchedItem.category,
         image_url: fetchedItem.image_url,
       });
+    }).catch((error) => {
+      console.error("Error fetching item:", error);
     });
-  }, []);
+  }, [itemId]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // put(`/item-management/${itemId}`, {
-    //   preserveScroll: true,
-    //   onSuccess: () => {
-    //     //
-    //   },
-    // });
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [id]: value,
+    }));
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
-    if (file) setData("image_url", file);
+    if (file) {
+      setImageFile(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+    setErrors({});
+
+    const payload = { ...formData };
+
+    try {
+      const token = localStorage.getItem("access_token");
+
+      if (imageFile) {
+        const imageFormData = new FormData();
+        imageFormData.append("image", imageFile);
+        const imageResponse = await axios.post(
+          "/api/upload-image",
+          imageFormData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              "Authorization": `Bearer ${token}`,
+            },
+          },
+        );
+
+        payload.image_url = imageResponse.data.image_url;
+      }
+
+      const response = await axios.put(`/api/items/${itemId}`, payload, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      window.location.href = "/item-management";
+    } catch (error) {
+      console.error("Error updating item:", error);
+
+      if (error.response && error.response.data.errors) {
+        setErrors(error.response.data.errors);
+      } else {
+        alert("An error occurred while updating the item");
+      }
+
+      setProcessing(false);
+    }
   };
 
   return (
@@ -118,13 +171,15 @@ export default function ItemManagementManage() {
                   <input
                     type="text"
                     id="name"
-                    value={data.name}
-                    onChange={(e) => setData("name", e.target.value)}
+                    value={formData.name}
+                    onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     required
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.name[0]}
+                    </p>
                   )}
                 </div>
 
@@ -138,15 +193,17 @@ export default function ItemManagementManage() {
                   <input
                     type="number"
                     id="price"
-                    value={data.price}
-                    onChange={(e) => setData("price", e.target.value)}
+                    value={formData.price}
+                    onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     required
                     min="0"
                     step="0.01"
                   />
                   {errors.price && (
-                    <p className="text-red-500 text-xs mt-1">{errors.price}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.price[0]}
+                    </p>
                   )}
                 </div>
 
@@ -159,8 +216,8 @@ export default function ItemManagementManage() {
                   </label>
                   <select
                     id="category"
-                    value={data.category}
-                    onChange={(e) => setData("category", e.target.value)}
+                    value={formData.category}
+                    onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     required
                   >
@@ -170,7 +227,7 @@ export default function ItemManagementManage() {
                   </select>
                   {errors.category && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.category}
+                      {errors.category[0]}
                     </p>
                   )}
                 </div>
@@ -185,15 +242,15 @@ export default function ItemManagementManage() {
                   <input
                     type="number"
                     id="initial_stock"
-                    value={data.initial_stock}
-                    onChange={(e) => setData("initial_stock", e.target.value)}
+                    value={formData.initial_stock}
+                    onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     required
                     min="0"
                   />
                   {errors.initial_stock && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.initial_stock}
+                      {errors.initial_stock[0]}
                     </p>
                   )}
                 </div>
@@ -208,15 +265,15 @@ export default function ItemManagementManage() {
                   <input
                     type="number"
                     id="current_stock"
-                    value={data.current_stock}
-                    onChange={(e) => setData("current_stock", e.target.value)}
+                    value={formData.current_stock}
+                    onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     required
                     min="0"
                   />
                   {errors.current_stock && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.current_stock}
+                      {errors.current_stock[0]}
                     </p>
                   )}
                 </div>
@@ -237,7 +294,7 @@ export default function ItemManagementManage() {
                   />
                   {errors.image_url && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.image_url}
+                      {errors.image_url[0]}
                     </p>
                   )}
                 </div>
