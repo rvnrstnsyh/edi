@@ -110,10 +110,6 @@ class ItemController extends Controller
     {
         try {
             $validatedData = $request->validated();
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('items', 'public');
-                $validatedData['image_url'] = Storage::url($imagePath);
-            }
             $validatedData['current_stock'] = $validatedData['initial_stock'];
             $item = Item::create($validatedData);
 
@@ -261,12 +257,10 @@ class ItemController extends Controller
             $validatedData = $request->validated();
             if (isset($validatedData['image_url']) && $validatedData['image_url'] !== $item->image_url) {
                 $oldImagePath = $item->image_url ? str_replace('/storage/', '', $item->image_url) : null;
-                if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
-                    Storage::disk('public')->delete($oldImagePath);
-                }
+                if ($oldImagePath && Storage::disk('public')->exists($oldImagePath)) Storage::disk('public')->delete($oldImagePath);
             }
             $item->update($validatedData);
-            return response()->json($item);
+            return response()->json($item, 200);
         } catch (ModelNotFoundException $error) {
             Log::warning('Item not found for update: ' . $id);
             return response()->json([

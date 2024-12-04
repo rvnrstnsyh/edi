@@ -18,8 +18,7 @@ class ItemStoreRequest extends FormRequest
             'price' => 'required|numeric|min:0',
             'category' => 'required|in:Food,Drink,Other',
             'initial_stock' => 'required|integer|min:0',
-            'current_stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'image_url' => 'nullable|string|max:255'
         ];
     }
 }

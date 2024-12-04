@@ -5,41 +5,16 @@ import { useEffect, useState } from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
 
 export default function ItemManagementManage() {
-  const [item, setItem] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     category: "Other",
     initial_stock: "",
-    current_stock: "",
     image_url: null,
   });
   const [errors, setErrors] = useState({});
   const [processing, setProcessing] = useState(false);
   const [imageFile, setImageFile] = useState(null);
-
-  const itemId = usePage().url.match(/\/item-management\/(\d+)\/manage/)[1];
-
-  useEffect(() => {
-    axios.get(`/api/items/${itemId}`, {
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-      },
-    }).then((response) => {
-      const fetchedItem = response.data;
-      setItem(fetchedItem);
-      setFormData({
-        name: fetchedItem.name,
-        price: fetchedItem.price.toString(),
-        category: fetchedItem.category,
-        initial_stock: fetchedItem.initial_stock.toString(),
-        current_stock: fetchedItem.current_stock.toString(),
-        image_url: fetchedItem.image_url,
-      });
-    }).catch((error) => {
-      console.error("Error fetching item:", error);
-    });
-  }, [itemId]);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -65,11 +40,10 @@ export default function ItemManagementManage() {
 
     try {
       const token = localStorage.getItem("access_token");
-
       if (imageFile) {
         const imageFormData = new FormData();
         imageFormData.append("image", imageFile);
-        const imageResponse = await axios.post(
+        await axios.post(
           "/api/upload-image",
           imageFormData,
           {
@@ -78,28 +52,24 @@ export default function ItemManagementManage() {
               "Authorization": `Bearer ${token}`,
             },
           },
-        );
-
-        payload.image_url = imageResponse.data.image_url;
+        ).then(async (response) => {
+          payload.image_url = response.data.image_url;
+          await axios.post("/api/items", payload, {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          window.location.href = "/item-management";
+        });
       }
-
-      await axios.put(`/api/items/${itemId}`, payload, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }).then((response) => {
-        if (response.status === 200) window.location.href = "/item-management";
-      });
     } catch (error) {
       console.error("Error updating item:", error);
-
       if (error.response && error.response.data.errors) {
         setErrors(error.response.data.errors);
       } else {
         alert("An error occurred while updating the item");
       }
-
       setProcessing(false);
     }
   };
@@ -108,7 +78,7 @@ export default function ItemManagementManage() {
     <AuthenticatedLayout
       header={
         <h2 className="text-xl font-semibold leading-tight text-gray-800">
-          Manage Item
+          Create New Item
         </h2>
       }
     >
@@ -116,49 +86,6 @@ export default function ItemManagementManage() {
       <div className="py-12">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white shadow-sm sm:rounded-lg p-6">
-            <div className="w-full max-w-sm mx-auto">
-              {item && (
-                <div className="bg-white border border-gray-200 rounded-lg shadow-md">
-                  <div className="relative">
-                    <img
-                      className="p-8 rounded-t-lg w-full h-72 object-cover"
-                      src={item.image_url || "/placeholder-image.png"}
-                      alt={item.name}
-                      onError={(e) => {
-                        e.target.src = "/placeholder-image.png";
-                        e.target.onerror = null;
-                      }}
-                    />
-                    {item.current_stock <= 10 && (
-                      <span className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded">
-                        Low Stock
-                      </span>
-                    )}
-                  </div>
-                  <div className="px-5 pb-5">
-                    <h5 className="text-lg font-semibold tracking-tight text-gray-900 h-16 overflow-hidden">
-                      {item.name}
-                    </h5>
-                    <hr className="border-t-2 border-gray-200" />
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-2xl font-bold text-gray-900">
-                        <span className="text-sm">Rp.</span>
-                        {item.price.toLocaleString("id-ID", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                          {item.current_stock}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             <div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -257,29 +184,6 @@ export default function ItemManagementManage() {
 
                 <div>
                   <label
-                    htmlFor="current_stock"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Current Stock
-                  </label>
-                  <input
-                    type="number"
-                    id="current_stock"
-                    value={formData.current_stock}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    required
-                    min="0"
-                  />
-                  {errors.current_stock && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.current_stock[0]}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label
                     htmlFor="image"
                     className="block text-sm font-medium text-gray-700"
                   >
@@ -311,7 +215,7 @@ export default function ItemManagementManage() {
                     disabled={processing}
                     className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
-                    {processing ? "Updating..." : "Update Item"}
+                    {processing ? "Creating..." : "Create Item"}
                   </button>
                 </div>
               </form>
