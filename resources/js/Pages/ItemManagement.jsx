@@ -15,6 +15,17 @@ export default function ItemManagement() {
     }).then((response) => setItems(response.data));
   }, []);
 
+  const handleDelete = async (event) => {
+    event.preventDefault();
+    if (window.confirm("Are you sure you want to delete this item?")) {
+      await axios.delete(`/api/items/${event.target.getAttribute("itemId")}`, {
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        },
+      }).then(() => window.location.reload());
+    }
+  };
+
   return (
     <AuthenticatedLayout
       header={
@@ -82,11 +93,13 @@ export default function ItemManagement() {
                             Manage
                           </button>
                         </Link>
-                        <Link href={`item-management/${item.id}/delete`}>
-                          <button className="w-full text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition duration-300 ease-in-out">
-                            Delete
-                          </button>
-                        </Link>
+                        <button
+                          onClick={handleDelete}
+                          itemID={item.id}
+                          className="w-full text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition duration-300 ease-in-out"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>
